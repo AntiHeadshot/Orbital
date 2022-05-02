@@ -53,6 +53,9 @@ namespace Orbital
             _grav2.Add(new Meteorite(new Vector2(550, 400), 5, (Pen)Pens.Red.Clone(), new Vector2(0, 5)));
             _grav2.Add(new Meteorite(new Vector2(550, 400), 5, (Pen)Pens.Cyan.Clone(), new Vector2(0, 7)));
 
+            _grav.Start();
+            _grav2.Start();
+
             new Task(() =>
             {
                 while (true)
@@ -70,7 +73,7 @@ namespace Orbital
                 {
                     _grav2.Tick();
                     _grav2.Invalidate();
-                    Thread.Sleep(500);
+                    Thread.Sleep(2000);
                 }
             }).Start();
         }
@@ -133,6 +136,17 @@ namespace Orbital
 
 
         private long lastT = Environment.TickCount;
+
+        public void Start()
+        {
+            long time = Environment.TickCount;
+            float dt = (time - lastT) / 100f;
+            lastT = time;
+
+            foreach (GravObject obj in _objsMoving)
+                obj.UpdateV(_objsWithGrav, dt);
+        }
+
         public void Tick()
         {
             long time = Environment.TickCount;
@@ -228,6 +242,20 @@ namespace Orbital
             g.DrawEllipse(Pen, Pos.X - R, Pos.Y - R, R * 2, R * 2);
         }
 
+        public void UpdateAcc(GravSystem sys, float dt)
+        {
+            //TDA 02.05.2022: ggf. Falsch. Untested
+            Acc += _updateAcc(sys);
+        }
+
+        public void Move(float dt)
+        {
+            PosOld = Pos;
+
+            Pos += dt * (V + dt * Acc / 2);
+            V += dt * Acc;
+        }
+
         public void UpdateV(IEnumerable<GravObject> objs, float dt)
         {
             Vector2 g = Vector2.Zero;
@@ -239,19 +267,9 @@ namespace Orbital
                 g += (dist * obj.Grav * 100) / lenS;//dist.Length = Grav*100/len;
             }
 
-            V += g * dt;
-        }
-
-        public void UpdateAcc(GravSystem sys, float dt)
-        {
-            Acc = _updateAcc(sys);
-            V += Acc * dt;
-        }
-
-        public void Move(float dt)
-        {
-            PosOld = Pos;
-            Pos += V * dt;
+            Vector2 accOld = Acc;
+            Acc = g;
+            V += dt * (Acc - accOld) / 2;
         }
     }
 
