@@ -31,7 +31,7 @@ namespace Orbital
             Brush fadeBrush = new SolidBrush(Color.FromArgb(5, 0, 0, 0));
             Brush fadeBrush2 = new SolidBrush(Color.FromArgb(10, 0, 0, 0));
 
-            _grav.OnRendering += DrawTrail(trail, _grav, fadeBrush);
+            _grav.OnRendering += g => DrawTrail(g, trail, _grav, fadeBrush);
 
             _grav.Add(new Planet(new Vector2(400, 400), 50, (Pen)Pens.White.Clone(), 0.2f));
 
@@ -43,7 +43,7 @@ namespace Orbital
 
             Bitmap trail2 = new(Width, Height);
 
-            _grav2.OnRendering += DrawTrail(trail2, _grav2, fadeBrush2);
+            _grav2.OnRendering += g => DrawTrail(g, trail2, _grav2, fadeBrush2);
 
             _grav2.Add(new Planet(new Vector2(400, 400), 50, (Pen)Pens.White.Clone(), 0.2f));
 
@@ -75,23 +75,20 @@ namespace Orbital
             }).Start();
         }
 
-        private GravSystem.OnRenderingEvent DrawTrail(Bitmap trail, GravSystem sys, Brush fadeBrush)
+        private void DrawTrail(Graphics g, Bitmap trail, GravSystem sys, Brush fadeBrush)
         {
-            return g =>
+            using (Graphics gTrail = Graphics.FromImage(trail))
             {
-                using (Graphics gTrail = Graphics.FromImage(trail))
+                gTrail.SmoothingMode = SmoothingMode.AntiAlias;
+
+                foreach (GravObject obj in sys.ObjsMoving)
                 {
-                    gTrail.SmoothingMode = SmoothingMode.AntiAlias;
-
-                    foreach (GravObject obj in sys.ObjsMoving)
-                    {
-                        gTrail.DrawLine(obj.Pen, obj.Pos.X, obj.Pos.Y, obj.PosOld.X, obj.PosOld.Y);
-                    }
-                    gTrail.FillRectangle(fadeBrush, 0, 0, trail.Width, trail.Height);
+                    gTrail.DrawLine(obj.Pen, obj.Pos.X, obj.Pos.Y, obj.PosOld.X, obj.PosOld.Y);
                 }
+                gTrail.FillRectangle(fadeBrush, 0, 0, trail.Width, trail.Height);
+            }
 
-                g.DrawImageUnscaled(trail, 0, 0);
-            };
+            g.DrawImageUnscaled(trail, 0, 0);
         }
 
         private void Form1_OnPaint(object source, PaintEventArgs args)
