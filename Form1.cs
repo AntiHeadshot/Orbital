@@ -252,6 +252,8 @@ namespace Orbital
         {
             PosOld = Pos;
 
+            //https://gamedev.stackexchange.com/questions/15708/how-can-i-implement-gravity
+
             Pos += dt * (V + dt * Acc / 2);
             V += dt * Acc;
         }
